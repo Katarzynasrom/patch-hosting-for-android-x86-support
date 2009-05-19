@@ -1,0 +1,65 @@
+page.title=&lt;uses-sdk&gt;
+@jd:body
+
+<dl class="xml">
+<dt>syntax:</dt>
+<dd><pre class="stx">&lt;uses-sdk android:<a href="#min">minSdkVersion</a>="<i>integer</i>" /&gt;</pre></dd>
+
+<dt>contained in:</dt>
+<dd><code><a href="{@docRoot}guide/topics/manifest/manifest-element.html">&lt;manifest&gt;</a></code></dd>
+
+<dt>description:</dt>
+<dd>Lets you express an application's compatibility with one or more versions of the Android platform,
+by means of an API Level integer. The API Level expressed by an application will be compared to the
+API Level of a given Android system, which may vary among different Android devices. To declare your
+application's minimum API Level compatibility, use the <a href="#min">minSdkVersion</a> attribute.
+</p>
+
+<p>
+The default level is 1. 
+</p>
+
+<p>
+For more information on the API level, see the 
+<a href="{@docRoot}guide/publishing/versioning.html#minsdkversion">Specifying 
+Minimum System API Version</a> section of 
+<a href="{@docRoot}guide/publishing/versioning.html">Versioning Your 
+Applications</a>.
+</p></dd> 
+
+
+<dt>attributes:</dt>
+<dd><dl class="attr">
+<dt><a name="min"></a>{@code android:minSdkVersion}</dt>
+<dd>An integer designating the minimum level of the Android API that's required 
+for the application to run.
+
+<p>
+Despite its name, this attribute specifies the API Level, <em>not</em> the 
+version number of the SDK (software development kit).  The API Level is always 
+a single integer; the SDK version may be split into major and minor components 
+(such as 1.5).  You cannot derive the API Level from the SDK version number 
+(for example, it is not the same as the major version or the sum of the major 
+and minor versions).  To learn what the API Level is, check the notes that 
+came with the SDK you're using.</p>
+
+<p>Prior to installing an application, the Android system checks the value of this
+attribute and allows the installation only if the
+API Level is less than or equal to the API Level used by the system itself.</p>
+
+<p>If you do not declare this attribute, then a value of "1" is assumed, which
+indicates that your application is compatible with all versions of Android. If your
+application is <em>not</em> universally compatible (for instance if it uses APIs
+introduced in Android 1.5) and you have not declared the proper <code>minSdkVersion</code>, 
+then when installed on a system with a lower API Level, the application 
+will crash during runtime. For this reason, be certain to declare the appropriate API Level
+in the <code>minSdkVersion</code> attribute.</p>
+</dd>
+
+</dl></dd>
+
+<!-- ##api level indication## -->
+<dt>introduced in:</dt>
+<dd>API Level 1</dd>
+
+</dl>
