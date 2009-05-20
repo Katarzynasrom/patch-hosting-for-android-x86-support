@@ -1,0 +1,32 @@
+From fe69162447b585918a8a26ab47b44c56a0209a83 Mon Sep 17 00:00:00 2001
+From: Dima Zavin <dmitriyz@google.com>
+Date: Thu, 26 Jun 2008 14:48:41 -0700
+Subject: [PATCH] intelfb: Also fail check_var if the virtual screen dimensions exceed the fb width/height.
+
+Signed-off-by: Dima Zavin <dmitriyz@google.com>
+---
+ linux-core/intel_fb.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
+
+diff --git a/linux-core/intel_fb.c b/linux-core/intel_fb.c
+index 492992e..2663df7 100644
+--- a/linux-core/intel_fb.c
++++ b/linux-core/intel_fb.c
+@@ -137,6 +137,14 @@ static int intelfb_check_var(struct fb_var_screeninfo *var,
+ 		return -EINVAL;
+ 	}
+ 
++	if (var->xres_virtual > fb->width || var->yres_virtual > fb->height) {
++		DRM_ERROR("Requested virtual xres/yres is greater than current"
++			  " fb object %dx%d > %%dx%d\n", var->xres_virtual,
++			  var->yres_virtual,fb->width,fb->height);
++		DRM_ERROR("Need resizing code.\n");
++		return -EINVAL;
++	}
++
+ 	switch (var->bits_per_pixel) {
+ 	case 16:
+ 		depth = (var->green.length == 6) ? 16 : 15;
+-- 
+1.5.4.5
+

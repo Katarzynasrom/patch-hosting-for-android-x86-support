@@ -1,0 +1,76 @@
+Modules:
+atl2.ko
+
+Source:
+    http://people.redhat.com/csnook/atl2/atl2-2.0.5.tar.bz2
+
+----------------------------
+
+Modules:
+  bitblit.ko
+  cfbcopyarea.ko
+  cfbfillrect.ko
+  cfbimgblt.ko
+  fbcon.ko
+  font.ko
+  softcursor.ko
+
+Source:
+  git://android.git.kernel.org/kernel/common.git android-2.6.25
+
+  commit b6922faa7d617f11440ab8096b8797ccdcebd10d
+  Author: Nick Pelly <npelly@google.com>
+  Date:   Mon Nov 10 21:59:54 2008 -0800
+
+      android_paranoid_network: Use in_egroup_p to check gid's.
+
+      groups_search is not exported from sys.c which causes problems for module
+      builds. in_egroup_p is exported and is just what we need.
+
+-----------------------------
+
+Modules:
+  drm.ko
+  i915.ko
+
+Source:
+  git://anongit.freedesktop.org/git/mesa/drm modesetting-101
+     with drm-patches/* applied. 
+
+
+commit e664967bde876b1a1cd205885dafa88a744a6c3d
+Author: Dima Zavin <dmitriyz@google.com>
+Date:   Thu Jun 26 14:38:42 2008 -0700
+
+    intel_fb: Add a hack to allocate the virtual screen 2x the height of the actual mode height, to allow a simplisti
+
+commit 41bebc2b10235f631f057e4325ea87027a1f2d2b
+Author: Dima Zavin <dmitriyz@google.com>
+Date:   Thu Jun 26 14:48:58 2008 -0700
+
+    intel_fb: pan_display should call mode_set_base, and not set_config.
+
+    Signed-off-by: Dima Zavin <dmitriyz@google.com>
+
+commit fe69162447b585918a8a26ab47b44c56a0209a83
+Author: Dima Zavin <dmitriyz@google.com>
+Date:   Thu Jun 26 14:48:41 2008 -0700
+
+    intelfb: Also fail check_var if the virtual screen dimensions exceed the fb width/height.
+
+    Signed-off-by: Dima Zavin <dmitriyz@google.com>
+
+commit e4713780e7907e51bfc2f43667a67eee332b1449
+Author: Dima Zavin <dmitriyz@google.com>
+Date:   Thu Jun 26 14:48:18 2008 -0700
+
+    intelfb: Force color depth changes to be applied to hw if the mode itself has not changed.
+
+    Signed-off-by: Dima Zavin <dmitriyz@google.com>
+
+commit 9c7137483d1ef47eaff99f98b3c4e552c726e5d9
+Author: Maarten Maathuis <madman2003@gmail.com>
+Date:   Thu Aug 14 20:42:28 2008 +0200
+
+    nouveau: fix typo
+

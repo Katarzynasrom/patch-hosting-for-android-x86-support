@@ -1,0 +1,11 @@
+git://android.git.kernel.org/kernel/common.git android-2.6.25
+
+commit b6922faa7d617f11440ab8096b8797ccdcebd10d
+Author: Nick Pelly <npelly@google.com>
+Date:   Mon Nov 10 21:59:54 2008 -0800
+
+    android_paranoid_network: Use in_egroup_p to check gid's.
+
+    groups_search is not exported from sys.c which causes problems for module
+    builds. in_egroup_p is exported and is just what we need.
+

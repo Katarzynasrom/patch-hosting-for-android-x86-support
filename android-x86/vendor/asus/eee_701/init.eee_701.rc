@@ -1,0 +1,10 @@
+on boot
+    setprop ro.radio.use-ppp no
+    setprop ro.radio.noril yes
+    setprop status.battery.state Slow
+    setprop status.battery.level 5
+    setprop status.battery.level_raw  50
+    setprop status.battery.level_scale 9
+
+service eee_701-setup /system/bin/sh /system/etc/init.eee_701.sh
+    oneshot

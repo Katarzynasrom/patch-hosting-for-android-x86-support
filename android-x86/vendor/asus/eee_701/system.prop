@@ -1,0 +1,5 @@
+# system.prop for eee_701
+ro.config.sync = yes
+app.setupwizard.disable=1
+keyguard.no_require_sim=1
+# end system.prop for eee_701

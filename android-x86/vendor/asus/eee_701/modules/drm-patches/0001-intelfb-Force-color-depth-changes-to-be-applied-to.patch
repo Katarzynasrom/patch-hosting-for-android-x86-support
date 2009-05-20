@@ -1,0 +1,109 @@
+From e4713780e7907e51bfc2f43667a67eee332b1449 Mon Sep 17 00:00:00 2001
+From: Dima Zavin <dmitriyz@google.com>
+Date: Thu, 26 Jun 2008 14:48:18 -0700
+Subject: [PATCH] intelfb: Force color depth changes to be applied to hw if the mode itself has not changed.
+
+Signed-off-by: Dima Zavin <dmitriyz@google.com>
+---
+ linux-core/intel_display.c |    2 ++
+ linux-core/intel_fb.c      |   42 ++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 38 insertions(+), 6 deletions(-)
+
+diff --git a/linux-core/intel_display.c b/linux-core/intel_display.c
+index b8077bd..13356a2 100644
+--- a/linux-core/intel_display.c
++++ b/linux-core/intel_display.c
+@@ -391,6 +391,7 @@ intel_pipe_set_base(struct drm_crtc *crtc, int x, int y)
+ 	I915_WRITE(dspstride, crtc->fb->pitch);
+ 
+ 	dspcntr = I915_READ(dspcntr_reg);
++	dspcntr &= ~DISPPLANE_PIXFORMAT_MASK;
+ 	switch (crtc->fb->bits_per_pixel) {
+ 	case 8:
+ 		dspcntr |= DISPPLANE_8BPP;
+@@ -410,6 +411,7 @@ intel_pipe_set_base(struct drm_crtc *crtc, int x, int y)
+ 		return;
+ 	}
+ 	I915_WRITE(dspcntr_reg, dspcntr);
++	DRM_DEBUG("Wrote DSP%cCNTR: 0x%x\n", pipe == 0 ? 'A' : 'B', dspcntr);
+ 
+ 	DRM_DEBUG("Writing base %08lX %08lX %d %d\n", Start, Offset, x, y);
+ 	if (IS_I965G(dev)) {
+diff --git a/linux-core/intel_fb.c b/linux-core/intel_fb.c
+index 5637ea2..492992e 100644
+--- a/linux-core/intel_fb.c
++++ b/linux-core/intel_fb.c
+@@ -127,7 +127,7 @@ static int intelfb_check_var(struct fb_var_screeninfo *var,
+ 	struct drm_framebuffer *fb = &intel_fb->base;
+ 	int depth;
+ 
+-	if (var->pixclock == -1 || !var->pixclock)
++	if (!var->pixclock)
+ 		return -EINVAL;
+ 
+ 	/* Need to resize the fb object !!! */
+@@ -323,6 +323,9 @@ static int intelfb_set_par(struct fb_info *info)
+ 
+ 		list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
+ 			struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
++			int depth;
++			struct drm_crtc_helper_funcs *crtc_funcs =
++				crtc->helper_private;
+ 
+ 			for (i = 0; i < par->crtc_count; i++)
+ 				if (crtc->base.id == par->crtc_ids[i])
+@@ -331,11 +334,38 @@ static int intelfb_set_par(struct fb_info *info)
+ 			if (i == par->crtc_count)
+ 				continue;
+ 
+-			if (crtc->fb == intel_crtc->mode_set.fb) {
+-				ret = crtc->funcs->set_config(&intel_crtc->mode_set);
+-				if (ret)
+-					return ret;
++			if (crtc->fb && crtc->fb != intel_crtc->mode_set.fb)
++				continue;
++
++			ret = crtc->funcs->set_config(&intel_crtc->mode_set);
++			if (ret)
++				return ret;
++			if (!crtc->fb)
++				continue;
++
++			/* make sure we apply bpp/depth changes. */
++			/* TODO: Hax! Figure out the right way to do this. */
++			switch (var->bits_per_pixel) {
++			case 16:
++				depth = (var->green.length == 6) ? 16 : 15;
++				break;
++			case 32:
++				depth = (var->transp.length > 0) ? 32 : 24;
++				break;
++			default:
++				depth = var->bits_per_pixel;
++				break;
+ 			}
++
++			/* skip if there's nothing to change */
++			if (crtc->fb->depth == depth &&
++			    (crtc->fb->bits_per_pixel == var->bits_per_pixel))
++				continue;
++			crtc->fb->depth = depth;
++			crtc->fb->bits_per_pixel = var->bits_per_pixel;
++			crtc_funcs->mode_set_base(
++				crtc, intel_crtc->mode_set.x,
++				intel_crtc->mode_set.y);
+ 		}
+ 		return 0;
+ 	}
+@@ -597,7 +627,7 @@ static struct notifier_block paniced = {
+ 	.notifier_call = intelfb_panic,
+ };
+ 
+-int intelfb_create(struct drm_device *dev, uint32_t fb_width, uint32_t fb_height, 
++static int intelfb_create(struct drm_device *dev, uint32_t fb_width, uint32_t fb_height, 
+ 		   uint32_t surface_width, uint32_t surface_height,
+ 		   struct intel_framebuffer **intel_fb_p)
+ {
+-- 
+1.5.4.5
+

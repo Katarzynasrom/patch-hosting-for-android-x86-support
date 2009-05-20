@@ -1,0 +1,102 @@
+From e664967bde876b1a1cd205885dafa88a744a6c3d Mon Sep 17 00:00:00 2001
+From: Dima Zavin <dmitriyz@google.com>
+Date: Thu, 26 Jun 2008 14:38:42 -0700
+Subject: [PATCH] intel_fb: Add a hack to allocate the virtual screen 2x the height of the actual mode height, to allow a simplistic double-buffering with ypan.
+
+---
+ linux-core/intel_fb.c |   26 +++++++++++++++++++-------
+ 1 files changed, 19 insertions(+), 7 deletions(-)
+
+diff --git a/linux-core/intel_fb.c b/linux-core/intel_fb.c
+index fc0410e..dedd425 100644
+--- a/linux-core/intel_fb.c
++++ b/linux-core/intel_fb.c
+@@ -53,6 +53,10 @@ struct intelfb_par {
+ 	/* crtc currently bound to this */
+ 	uint32_t crtc_ids[2];
+ };
++
++#define INTELFB_WIDTH_MUL  1
++#define INTELFB_HEIGHT_MUL 2
++
+ /*
+ static int
+ var_to_refresh(const struct fb_var_screeninfo *var)
+@@ -139,8 +143,8 @@ static int intelfb_check_var(struct fb_var_screeninfo *var,
+ 
+ 	if (var->xres_virtual > fb->width || var->yres_virtual > fb->height) {
+ 		DRM_ERROR("Requested virtual xres/yres is greater than current"
+-			  " fb object %dx%d > %%dx%d\n", var->xres_virtual,
+-			  var->yres_virtual,fb->width,fb->height);
++			  " fb object %dx%d > %dx%d\n", var->xres_virtual,
++			  var->yres_virtual, fb->width, fb->height);
+ 		DRM_ERROR("Need resizing code.\n");
+ 		return -EINVAL;
+ 	}
+@@ -328,7 +332,6 @@ static int intelfb_set_par(struct fb_info *info)
+ 	} else {
+ 		struct drm_crtc *crtc;
+ 		int ret;
+-
+ 		list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
+ 			struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
+ 			int depth;
+@@ -367,8 +370,10 @@ static int intelfb_set_par(struct fb_info *info)
+ 
+ 			/* skip if there's nothing to change */
+ 			if (crtc->fb->depth == depth &&
+-			    (crtc->fb->bits_per_pixel == var->bits_per_pixel))
++			    (crtc->fb->bits_per_pixel == var->bits_per_pixel)) {
+ 				continue;
++                        }
++
+ 			crtc->fb->depth = depth;
+ 			crtc->fb->bits_per_pixel = var->bits_per_pixel;
+ 			crtc_funcs->mode_set_base(
+@@ -823,7 +828,7 @@ static int intelfb_multi_fb_probe_crtc(struct drm_device *dev, struct drm_crtc *
+ 	struct fb_info *info;
+ 	struct intelfb_par *par;
+ 	struct drm_mode_set *modeset;
+-	unsigned int width, height;
++	unsigned int width, height, surface_width, surface_height;
+ 	int new_fb = 0;
+ 	int ret, i, conn_count;
+ 
+@@ -834,18 +839,22 @@ static int intelfb_multi_fb_probe_crtc(struct drm_device *dev, struct drm_crtc *
+ 		return 0;
+ 
+ 	width = crtc->desired_mode->hdisplay;
++	surface_width = width * INTELFB_WIDTH_MUL;
+ 	height = crtc->desired_mode->vdisplay;
++	surface_height = height * INTELFB_HEIGHT_MUL;
+ 
+ 	/* is there an fb bound to this crtc already */
+ 	if (!intel_crtc->mode_set.fb) {
+-		ret = intelfb_create(dev, width, height, width, height, &intel_fb);
++		ret = intelfb_create(dev, width, height, surface_width,
++				     surface_height, &intel_fb);
+ 		if (ret)
+ 			return -EINVAL;
+ 		new_fb = 1;
+ 	} else {
+ 		fb = intel_crtc->mode_set.fb;
+ 		intel_fb = to_intel_framebuffer(fb);
+-		if ((intel_fb->base.width < width) || (intel_fb->base.height < height))
++		if ((intel_fb->base.width < surface_width) ||
++		    (intel_fb->base.height < surface_height))
+ 			return -EINVAL;
+ 	}
+ 	
+@@ -950,6 +959,9 @@ static int intelfb_single_fb_probe(struct drm_device *dev)
+ 		return 0;
+ 	}
+ 
++	surface_width *= INTELFB_WIDTH_MUL;
++	surface_height *= INTELFB_HEIGHT_MUL;
++
+ 	/* do we have an fb already? */
+ 	if (list_empty(&dev->mode_config.fb_kernel_list)) {
+ 		/* create an fb if we don't have one */
+-- 
+1.5.4.5
+

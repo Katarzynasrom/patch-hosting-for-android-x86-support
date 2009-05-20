@@ -1,0 +1,49 @@
+From 41bebc2b10235f631f057e4325ea87027a1f2d2b Mon Sep 17 00:00:00 2001
+From: Dima Zavin <dmitriyz@google.com>
+Date: Thu, 26 Jun 2008 14:48:58 -0700
+Subject: [PATCH] intel_fb: pan_display should call mode_set_base, and not set_config.
+
+Signed-off-by: Dima Zavin <dmitriyz@google.com>
+---
+ linux-core/intel_fb.c |   18 +++++++++---------
+ 1 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/linux-core/intel_fb.c b/linux-core/intel_fb.c
+index 2663df7..fc0410e 100644
+--- a/linux-core/intel_fb.c
++++ b/linux-core/intel_fb.c
+@@ -536,7 +536,9 @@ static int intelfb_pan_display(struct fb_var_screeninfo *var,
+ 	int i;
+ 
+ 	list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
+-		
++		struct drm_crtc_helper_funcs *crtc_funcs =
++			crtc->helper_private;
++
+ 		for (i = 0; i < par->crtc_count; i++)
+ 			if (crtc->base.id == par->crtc_ids[i])
+ 				break;
+@@ -550,14 +552,12 @@ static int intelfb_pan_display(struct fb_var_screeninfo *var,
+ 		modeset->x = var->xoffset;
+ 		modeset->y = var->yoffset;
+ 
+-		if (modeset->num_connectors) {
+-			ret = crtc->funcs->set_config(modeset);
+-		  
+-			if (!ret) {
+-				info->var.xoffset = var->xoffset;
+-				info->var.yoffset = var->yoffset;
+-			}
+-		}
++		if (!modeset->num_connectors)
++			continue;
++
++		crtc_funcs->mode_set_base(crtc, modeset->x, modeset->y);
++		info->var.xoffset = modeset->x;
++		info->var.yoffset = modeset->y;
+ 	}
+ 
+ 	return ret;
+-- 
+1.5.4.5
+
