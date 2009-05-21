@@ -1,0 +1,46 @@
+#!/usr/bin/make -f
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+
+	$(MAKE) distclean
+
+	dh_clean
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+
+	$(MAKE)
+
+	touch build-stamp
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+
+	$(MAKE) DESTDIR=$(CURDIR)/debian/dosfstools PREFIX=/usr SBINDIR=/sbin install
+
+binary: binary-arch
+
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs ChangeLog
+	dh_installdocs
+	dh_strip --dbg-package=dosfstools-dbg
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary-indep:
+
+.PHONY: clean build install binary binary-arch binary-indep
