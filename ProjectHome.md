@@ -1,0 +1,1 @@
+# patch-hosting-for-android-x86-support project is officially moved to http://www.android-x86.org #
